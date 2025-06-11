@@ -1,0 +1,28 @@
+//coordinates and RGB colours are the variables
+var y=0
+var x=0
+var g=0
+var b=0
+var r=0
+
+//this function will be set up at the start 
+function setup(){
+  createCanvas(700,700)
+  background(150,160,80);
+}
+//this next function will be called 60 times a second 
+function draw(){
+  fill(r,g,b);
+  //it is going to loop 10 times and draw small rectangles and look colourful using a for loop 
+  for (var i=0;i<100;i+=10){
+  rect(x+i,y+i,10,10);
+  }
+  x=random(width);//this is to get a new string postion for the line of squares 
+  y=random(height);
+  r=random(225);
+  g=random(225);
+  b=random(225);
+
+
+
+}
