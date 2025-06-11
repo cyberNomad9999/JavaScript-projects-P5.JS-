@@ -1,0 +1,25 @@
+var circleCenterX;
+var circleCenterY;
+var circleRadius;
+
+//to create background and circle
+function setup(){
+  createCanvas(300,300);
+  circleCenterX = width/2;
+  circleCenterY = height/2;
+  circleRadius = 100;
+}
+
+//changes the background from yellow to red when mouse is in the circle 
+function draw(){
+  background(64);
+  
+  if(dist(mouseX, mouseY, circleCenterX, circleCenterY) <
+     circleRadius){
+    fill(255, 0, 0);
+  }
+  else{
+    fill(0, 255, 0);
+  }
+  ellipse(circleCenterX, circleCenterY, circleRadius*2, circleRadius*2);
+}
