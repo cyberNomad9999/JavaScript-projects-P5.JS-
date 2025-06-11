@@ -1,0 +1,26 @@
+var r;
+var x=0;
+var y=0;
+//this function will only be called once at the start 
+function setup(){
+  createCanvas(800,800);
+  background(0);
+}
+//the next function will be called 60 times a second 
+function draw(){
+  noStroke();
+  //this will initialise the loop variable
+  r=0//At the start there is no red 
+  //this starts the loop 
+  while ( r != 255){
+    
+    
+    //the loop starts here
+    fill(r,0,0);
+    rect(x,y,100,100);
+    r += 5 ;
+    x +=1;
+    y +=1;
+    
+  }
+}
