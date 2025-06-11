@@ -1,0 +1,29 @@
+let layer;
+function setup() {
+  createCanvas(400, 400, WEBGL);
+  layer = createFramebuffer();
+  describe('a rotating red cube with yellow dots on each face');
+}
+function draw() {
+  let t = millis() * 0.001;
+  layer.begin();
+  background('red');
+  noStroke();
+  fill('yellow');
+  for (let i = 0; i < 30; i += 1) {
+    circle(
+      map(noise(i*10, 0, t), 0, 1, -width/2, width/2),
+      map(noise(i*10, 100, t), 0, 1, -height/2, height/2),
+      20
+    );
+  }
+  layer.end();
+ 
+  background(255);
+  lights();
+  noStroke();
+  texture(layer);
+  rotateX(t);
+  rotateY(t);
+  box(100);
+}
