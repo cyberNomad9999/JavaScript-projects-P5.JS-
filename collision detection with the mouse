@@ -1,0 +1,30 @@
+var centerRectX = 125;
+var centerRectY = 100;
+var centerRectWidth = 50;
+var centerRectHeight = 100;
+var mouseRectWidth = 100;
+var mouseRectHeight = 50;
+
+function setup(){
+  createCanvas(300, 300);
+}
+
+function draw(){
+  background(64);
+  
+  //draw the center rectangle 
+  noFill();
+  stroke(255);
+  rect(centerRectX, centerRectY, centerRectWidth, centerRectHeight);
+  
+  //change color if rectangles are colliding 
+  if (mouseX + mouseRectWidth > centerRectX && mouseX < centerRectX + centerRectWidth && mouseY + mouseRectHeight > centerRectY && mouseY < centerRectY + centerRectHeight){
+  fill(255, 0, 0);
+  }
+  else {
+    fill(0, 255, 0);
+  }
+  
+//draw the mouse rectangle
+  rect(mouseX, mouseY, mouseRectWidth, mouseRectHeight);
+}
