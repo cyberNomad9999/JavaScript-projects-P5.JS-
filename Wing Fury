@@ -1,0 +1,561 @@
+let bullets = []; // Player's bullets
+let enemyBullets = []; // Enemies' bullets
+let enemies = []; // List of enemies
+let healingItems = []; // Healing items
+let score = 0;
+let playerHealth = 100; // Player's health
+let stage = 0; // Game stage: 0 = loading, 1 = main game
+let boss1Bullets = [];
+let showBossMessage = false; // Controls if "Boss defeated!" message is displayed
+let messageStartTime; // Tracks the start time of the message
+
+bgm = null;
+
+// Boss fight questions
+let bossQuestions = [
+  {
+    question: "What is the tallest mountain in the world?",
+    answer: "Mount Everest",
+  },
+  { question: "What is the capital of France?", answer: "Paris" },
+  { question: "What is 12 * 2?", answer: "24" },
+  { question: "What species are monkeys?", answer: "Mammals" },
+  { question: "what is the largest country in the world?", answer: "Russia" },
+  { question: "what is the capital city of England?", answer: "London" },
+  {
+    question: "what is the largest planet in our solar system?",
+    answer: "Jupiter",
+  },
+  { question: "what is 7 * 3?", answer: "21" },
+  { question: "what is 10 - 5?", answer: "5" },
+  { question: "what is 10 + 10?", answer: "20" },
+  { question: "How many legs does a spider have?", answer: "8" },
+  {
+    question: "Whose nose grew longer every time he lied?",
+    answer: "Pinocchio",
+  },
+  { question: " If you freeze water, what do you get?", answer: "ice" },
+];
+
+let askingQuestion = false; // Tracks if a question is being asked
+let currentQuestion = null; // Stores the current question
+let questionStartTime = null; // Tracks when the question was asked
+
+let boss1 = {
+  bullets: [],
+  health: 100,
+  warning: 0,
+  warned: false,
+  spawned: false,
+  shooting: false,
+  defeated: false, // Prevents respawn after defeat
+  x: 60,
+  y: 200,
+  shootingInterval: 0,
+  lastShotTime: 0,
+  colliding: function (obj) {
+    let obj_rx = obj.x - this.x;
+    let obj_ry = obj.y - this.y;
+
+    if (obj_rx >= 110 && obj_rx <= 310 && obj_ry >= 0 && obj_ry <= 300) {
+      return true;
+    }
+
+    if (obj_rx >= 0 && obj_rx <= 420 && obj_ry <= 0) {
+      return true;
+    }
+
+    return false;
+  },
+  draw: function () {
+    let x = this.x;
+    let y = this.y;
+
+    // Draw the boss body
+    fill("green");
+    rect(210 + x, 150 + y, 200, 300); // Main body
+
+    // Wing R
+    fill("green");
+    triangle(310 + x, 170 + y, 420 + x, y, 310 + x, y);
+
+    // Wing L
+    fill("green");
+    triangle(110 + x, 170 + y, 110 + x, y, x, y);
+
+    // Gun
+    fill("green");
+    rect(x + 210, y + 20, 40, 40);
+    fill("green");
+    rect(x + 210, y + 90, 20, 100);
+
+    // Draw boss bullets
+    draw_boss_bullets();
+
+    // Draw the health bar
+    draw_boss_health_bar(x + 210, y - 20, this.health, 100);
+  },
+};
+
+//music
+
+let backgroundMetal; // Declare the variable
+let gameOverSound;
+let Danger;
+let mountview_img;
+
+function preload() {
+  soundFormats("m4a"); // Specify the audio file format
+  backgroundMetal = loadSound("WingFury_soundtrack.m4a"); // Ensure file path and extension are correct
+  player_img = loadImage("/assets/player.png");
+  enemy_img = loadImage("/assets/enemy.png");
+  healingItem_img = loadImage("/assets/healingItem.png");
+  mountain_img = loadImage("/assets/mountain.png");
+  fuji_img = loadImage("/assets/fuji.JPEG");
+  studioImage_img = loadImage("/assets/studioImage.png");
+  soundFormats("mp3");
+  gameOverSound = loadSound("gameOver.mp3");
+  Danger = loadSound("Danger_sound_effect.mp3");
+  mountview_img = loadImage("/assets/background.png");
+}
+
+function setup() {
+  createCanvas(600, 700);
+  mountview_img = loadImage("/assets/background.png"); //, 600, 700);
+  stage = 0;
+  for (let i = 0; i < 10; i++) {
+    let enemy = {
+      x: random(0, width),
+      y: random(-800, 0),
+      shootingInterval: random(20, 180),
+      lastShotTime: frameCount,
+      shooting: false,
+    };
+    enemies.push(enemy);
+  }
+  userStartAudio(); // Enable audio playback
+  //backgroundMetal.play(); // Start playing music
+  bgm = backgroundMetal;
+  bgm.play();
+  bgm.loop(); // Loop music playback
+  bgm.setVolume(0.6); // Set volume (0 to 1)
+}
+
+function draw() {
+  if (stage === 0) {
+    splashScreen();
+  } else if (stage === 1) {
+    playGame();
+  } else if (stage === 2) {
+    endScreen();
+  }
+
+  // Display "Boss defeated!" message if triggered
+  if (showBossMessage) {
+    if (millis() - messageStartTime < 3000) {
+      // Show for 3 seconds
+      textSize(30);
+      fill("blue");
+      textAlign(CENTER, CENTER);
+      textStyle(BOLD);
+      text("Boss defeated!", width / 2, height / 2);
+    } else {
+      showBossMessage = false; // Stop showing the message after 3 seconds
+    }
+  }
+}
+
+function splashScreen() {
+  image(fuji_img, 0, 0, 600, 700);
+
+  fill("orange");
+  textSize(30);
+  text("Click to Start", 250, 600);
+
+  fill("white");
+  textSize(30);
+  textFont("Courier New");
+  text(
+    "Defeat the enemies of Mount \nFuji by clicking the mouse, \nand collecting medkits for \nhealth",
+    100,
+    300
+  );
+
+  if (mouseIsPressed) {
+    stage = 1;
+  }
+
+  textSize(20);
+  fill("yellow");
+  textFont("veranda");
+  text("Fun Fact: 1,300 Earths can fit into Jupiter.", 170, 640);
+
+  fill("white");
+  text("Created by Joker Entertainment (Oscar Gauthier)", 150, 670);
+
+  image(studioImage_img, 540, 640, 40, 40);
+}
+
+function endScreen() {
+  background("Black");
+
+  // Congratulations message
+  textSize(40);
+  fill("green");
+  textAlign(CENTER);
+  text("CONGRATULATIONS\nYOU HAVE COMPLETED\nTHE GAME!", width / 2, 100);
+
+  // Overall score
+  textSize(30);
+  fill("yellow");
+  textAlign(CENTER);
+  text("Overall score: " + score, width / 2, 350);
+
+  // High score
+  textSize(30);
+  fill("yellow");
+  textAlign(CENTER);
+  text("High score: 105", width / 2, 400);
+
+  // Fun fact
+  textSize(20);
+  fill("yellow");
+  textAlign(CENTER);
+  text("Fun fact: Sharks do not have any bones.", width / 2, 650);
+
+  /* // Secret level prompt
+  textSize(15);
+  fill("blue");
+  textAlign(CENTER);
+  text("Click here to continue", width / 2, 600);*/
+
+  if (showBossMessage) {
+    stage = 2;
+  }
+}
+
+function gameOverScreen() {
+  if (showBossMessage) {
+    stage = 2;
+  }
+  stage = 2; // Transition to the end screen
+  noLoop(); // Stop further game updates
+}
+
+function playGame() {
+  //background("deepskyblue");
+  //mountview_img = new image('/assets/background.jpg')//, 0, 0);
+  //image(mountain_img, -200, -250, 1000, 700);
+  //image(building_img, 0, 0, 10, 70);
+  image(mountview_img, 0, 0);
+  rectMode(CENTER);
+
+  // Draw Player
+  fill("red");
+  image(player_img, mouseX - 75, mouseY, 150, 150);
+  //circle(mouseX, mouseY, 50);
+
+  // Update and draw player bullets
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    let bullet = bullets[i];
+    fill("yellow");
+    circle(bullet.x, bullet.y, 10);
+    bullet.y -= 10;
+
+    if (bullet.y < 0) {
+      bullets.splice(i, 1);
+    }
+  }
+
+  // Boss question logic
+  if (askingQuestion) {
+    askQuestion();
+    return; // Pause game logic during question
+  }
+
+  // Update and draw enemy bullets
+  for (let i = enemyBullets.length - 1; i >= 0; i--) {
+    let enemyBullet = enemyBullets[i];
+    fill("orange");
+    circle(enemyBullet.x, enemyBullet.y, 10);
+    enemyBullet.y += 3;
+
+    if (enemyBullet.y > height) {
+      enemyBullets.splice(i, 1);
+    }
+
+    if (dist(enemyBullet.x, enemyBullet.y, mouseX, mouseY) < 30) {
+      playerHealth -= 10;
+      enemyBullets.splice(i, 1);
+
+      if (playerHealth <= 0) {
+        gameOver();
+      }
+    }
+  }
+
+  // Update and draw enemies
+  for (let enemy of enemies) {
+    enemy.y += 1;
+    image(enemy_img, enemy.x - 30, enemy.y - 30, 60, 60);
+    //rect(enemy.x, enemy.y, 30, 30);
+
+    if (enemy.y > 0 && !enemy.shooting) {
+      enemy.shooting = true;
+      enemy.lastShotTime = frameCount;
+    }
+
+    if (
+      enemy.shooting &&
+      frameCount - enemy.lastShotTime >= enemy.shootingInterval
+    ) {
+      let enemyBullet = {
+        x: enemy.x,
+        y: enemy.y + 15,
+      };
+      enemyBullets.push(enemyBullet);
+      enemy.lastShotTime = frameCount;
+    }
+  }
+
+  // Check for collisions between bullets and enemies
+  for (let enemy of enemies) {
+    for (let bullet of bullets) {
+      if (dist(enemy.x, enemy.y, bullet.x, bullet.y) < 30) {
+        enemies.splice(enemies.indexOf(enemy), 1);
+        bullets.splice(bullets.indexOf(bullet), 1);
+
+        let newEnemy = {
+          x: random(0, width),
+          y: random(-800, 0),
+          shootingInterval: random(60, 180),
+          lastShotTime: frameCount,
+          shooting: false,
+        };
+        enemies.push(newEnemy);
+
+        score += 1;
+
+        if (score % 5 === 0) {
+          spawnHealingItem();
+        }
+
+        break;
+      }
+    }
+  }
+
+  // Update and draw healing items
+  for (let i = healingItems.length - 1; i >= 0; i--) {
+    let healingItem = healingItems[i];
+    image(healingItem_img, healingItem.x - 10, healingItem.y - 10, 40, 40);
+    // fill("gold");
+    // ellipse(healingItem.x, healingItem.y, 20, 20);
+    healingItem.y += 3;
+
+    if (dist(healingItem.x, healingItem.y, mouseX, mouseY) < 25) {
+      playerHealth = min(playerHealth + 5, 100);
+      healingItems.splice(i, 1);
+    }
+
+    if (healingItem.y > height) {
+      healingItems.splice(i, 1);
+    }
+  }
+
+  // Boss logic
+  if (score === 40 && boss1.warning === 0 && !boss1.warned && !boss1.defeated) {
+    boss1.warning = 1;
+    Danger.play();
+  }
+  if (boss1.warning !== 0) {
+    bossWarning();
+  }
+  if (boss1.warning > 5) {
+    boss1.warning = 0;
+    boss1.warned = true;
+  }
+  if (boss1.warned && !boss1.spawned && !boss1.defeated) {
+    if (frameCount % 30 === 0) {
+      boss1.spawned = true;
+      boss1.y = -300;
+      boss1.x = 10 + Math.random() * (600 - 420 - 20);
+    }
+  }
+  if (boss1.spawned) {
+    boss1.draw();
+    if (boss1.y <= 100) {
+      boss1.y += 1;
+    }
+  }
+
+  textSize(16);
+  fill(0);
+  text("Score: " + score, 15, 25);
+  text("Health: " + playerHealth, 15, 45);
+}
+
+function askQuestion() {
+  if (!currentQuestion) {
+    currentQuestion = random(bossQuestions);
+    questionStartTime = millis();
+  }
+
+  textSize(20);
+  fill("white");
+  textAlign(CENTER, CENTER);
+  text(currentQuestion.question, width / 2, height / 2 - 20);
+  text("Press enter to type your answer:", width / 2, height / 2 + 10);
+}
+
+function checkAnswer(input) {
+  if (currentQuestion) {
+    if (input.toLowerCase() === currentQuestion.answer.toLowerCase()) {
+      playerHealth = min(playerHealth + 10, 100); // Correct answer: Gain health
+      alert("Correct! You gained 10 health.");
+    } else {
+      playerHealth -= 20; // Incorrect answer: Lose health
+      alert("Wrong! You lost 20 health.");
+    }
+
+    currentQuestion = null;
+    askingQuestion = false;
+  }
+}
+
+function keyPressed() {
+  if (currentQuestion && keyCode === ENTER) {
+    bgm.pause();
+    let playerAnswer = prompt("Enter your answer:");
+    if (playerAnswer !== null) {
+      checkAnswer(playerAnswer);
+    }
+    bgm.play();
+  }
+}
+
+function draw_boss_bullets() {
+  for (let i = boss1Bullets.length - 1; i >= 0; i--) {
+    let boss1Bullet = boss1Bullets[i];
+    fill("red");
+    circle(boss1Bullet.x, boss1Bullet.y, 10);
+    boss1Bullet.y += 3;
+
+    if (boss1Bullet.y > height) {
+      boss1Bullets.splice(i, 1);
+    }
+
+    if (dist(boss1Bullet.x, boss1Bullet.y, mouseX, mouseY) < 30) {
+      playerHealth -= 15;
+      boss1Bullets.splice(i, 1);
+
+      if (playerHealth <= 0) {
+        gameOver();
+      }
+    }
+  }
+
+  if (
+    boss1.shooting &&
+    frameCount - boss1.lastShotTime >= boss1.shootingInterval
+  ) {
+    let boss1Bullet = {
+      x: boss1.x + 210,
+      y: boss1.y + 150,
+    };
+    boss1Bullets.push(boss1Bullet);
+    boss1.lastShotTime = frameCount;
+    boss1.shootingInterval = random(30, 180);
+  }
+
+  if (boss1.y > 0 && !boss1.shooting) {
+    boss1.shooting = true;
+    boss1.lastShotTime = frameCount;
+  }
+
+  boss1_collision();
+}
+
+function draw_boss_health_bar(x, y, health, maxHealth) {
+  let barWidth = 200;
+  let barHeight = 20;
+
+  fill("black");
+  rect(x - barWidth / 2, y, barWidth, barHeight);
+
+  let healthRatio = health / maxHealth;
+  fill(healthRatio > 0.5 ? "red" : healthRatio > 0.2 ? "yellow" : "orange");
+  rect(x - barWidth / 2, y, barWidth * healthRatio, barHeight);
+}
+
+function boss1_collision() {
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    let bullet = bullets[i];
+    if (boss1.colliding(bullet)) {
+      bullets.splice(i, 1);
+      boss1.health -= 2;
+
+      if (boss1.health <= 0) {
+        boss1Defeated();
+        break;
+      } else if (boss1.health % 20 === 0) {
+        askingQuestion = true;
+      }
+    }
+  }
+}
+
+function boss1Defeated() {
+  boss1.spawned = false;
+  boss1.shooting = false;
+  boss1.defeated = true; // Ensure boss does not respawn
+
+  // Trigger the message
+  messageStartTime = millis(); // Start message timer
+  showBossMessage = true;
+}
+
+function bossWarning() {
+  textSize(32);
+  textAlign(CENTER, CENTER);
+  if (frameCount % 60 === 0) {
+    boss1.warning += 1;
+  }
+  if (frameCount % 30 < 15) {
+    fill(255, 0, 0);
+    text("DANGER!", width / 2, height / 2);
+  }
+}
+
+function mousePressed() {
+  let bullet = {
+    x: mouseX,
+    y: mouseY,
+  };
+  bullets.push(bullet);
+}
+
+function gameOver() {
+  backgroundMetal.stop();
+  gameOverSound.play();
+  textSize(32);
+  textAlign(CENTER, CENTER);
+  fill(255, 0, 0);
+  text("GAME OVER!\nYour score is: " + score, width / 2, height / 2);
+  fill("yellow");
+  textSize(20);
+  text(
+    "Fun Fact: Asia is the largest \ncontinent on earth. This also means it has the \nlargest population with over \n4.46 billion people!.",
+    340,
+    640
+  );
+  noLoop();
+}
+
+function spawnHealingItem() {
+  let healingItem = {
+    x: random(50, width - 50),
+    y: -20,
+  };
+  healingItems.push(healingItem);
+}
