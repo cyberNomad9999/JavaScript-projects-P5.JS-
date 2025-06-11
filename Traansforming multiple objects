@@ -1,0 +1,30 @@
+function setup() {
+  createCanvas(400, 400, WEBGL);
+  
+}
+
+function draw() {
+  background(220);
+  noStroke();
+  lights();
+  orbitControl(); //this lets you take control of the object 
+  
+  push();
+  translate(-50, 0, -100);
+  fill("red");
+  sphere(50);
+  pop();
+  
+   push();
+  translate(0, -100, -300);
+  fill('green');
+  sphere(50);
+  pop();
+ 
+  push();
+  translate(25, 25, 50);
+  fill('blue');
+  sphere(50);
+  pop();
+  
+}
