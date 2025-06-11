@@ -1,0 +1,62 @@
+//set variables to draw the race track
+let startLine = 30;
+let finishLine = 400;
+
+//set variables to draw circles starting point 
+let circX = startLine;
+let circY = 250;
+let spacing = 20;
+let segments = 6;
+let segmentSize = 50;
+let eyeSize = 15;
+
+function setup() {
+  createCanvas(500, 500);
+  
+  //set a slow frame rate 
+  frameRate(3);
+}
+
+function draw() {
+  background(121, 96, 76);
+  
+  //draw the start and finish lines 
+  noStroke();
+  fill(0);
+  rect(startLine, 0, 5, height);
+  fill(0, 255, 0);
+  rect(finishLine, 0, 20, height);
+  
+  //draw 3 caterpillars 
+  drawCaterpillar(circX, circY - 150);
+  drawCaterpillar(circX, circY);
+  drawCaterpillar(circX, circY + 150);
+  
+  circX += spacing;
+  //stop the animation when x reaches the finish line 
+  if (circX > finishLine){
+    noLoop()       
+  }
+  
+  function drawCaterpillar(x,y) {
+  // Create a loop of circles
+  // to form the body.
+  for (let i = 0; i < segments; i += 1) {
+    fill(255, 0, 200);
+    stroke(0);
+    strokeWeight(1);
+    circle(x, y, 50);
+
+    x += spacing;
+  }
+ 
+  // Draw the caterpillar's eyes.
+  fill(0);
+  stroke(255);
+  strokeWeight(3);
+  circle(x, y - eyeSize, eyeSize);
+  circle(x - eyeSize, y - eyeSize, eyeSize);
+}
+  
+  
+}
